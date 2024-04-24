@@ -1,0 +1,27 @@
+pip install flask-bootstrap
+
+pip install flask
+
+pip install mysqlclient
+
+pip install flask-socketiopip install Flask
+
+pip install flask_sqlalchemy
+
+pip install flask_bootstrap
+
+pip install pillow
+
+pip install opencv-python-headless
+
+pip install face_recognition
+
+pip install SQLAlchemy
+
+pip install flask_socketio
+
+pip install ultralytics
+
+pip install matplotlib
+
+pip install cvzone
