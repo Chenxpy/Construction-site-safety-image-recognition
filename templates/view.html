@@ -1,37 +1,96 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="utf-8"/>
-    <title>查看用户</title>
+    <title>查詢用戶系統</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href=static\view_style.css>
+    <script>
+        function showAbsentees() {
+            var searchDate = document.getElementById('search_date').value;
+            window.location.href = "{{ url_for('check_absentees_by_date') }}?date=" + searchDate;
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            // 檢查是否有搜尋結果
+            var searchResultTable = document.getElementById('searchResultTable');
+            if (searchResultTable && searchResultTable.rows.length > 0) {
+                // 清空整個搜尋結果區域
+                searchResultTable.innerHTML = '';
+
+                // 清空搜尋欄
+                var searchQueryInput = document.getElementById('search_query');
+                if (searchQueryInput) {
+                    searchQueryInput.value = '';
+                }
+            }
+        });
+    </script>
 </head>
+</head>
+
 <body>
-    <a href="{{ url_for('home') }}" style="position: absolute; top: 10px; right: 10px; text-decoration: none; color: #000;">
+    <!-- 新增返回首頁按鈕 -->
+    <a href="{{ url_for('home') }}" onclick="location.reload(true);"
+        style="position: absolute; top: 10px; right: 10px; text-decoration: none; color: #000;">
         <button>返回首頁</button>
     </a>
-    <h1>已註冊清單</h1>
+
+    <!-- 新增查看所有用戶按鈕 -->
+    <a href="{{ url_for('view_list') }}"
+        style="position: absolute; top: 60px; right: 10px; text-decoration: none; color: #000;">
+        <button>查看所有用戶</button>
+    </a>
+    <form action="{{ url_for('search') }}" method="GET">
+        <label for="search_date">搜尋日期:</label>
+        <input type="date" id="search_date" name="search_date">
+        <label for="search_id">輸入工號:</label>
+        <input type="text" id="search_id" name="search_id">
+        <button type="submit">搜尋</button>
+        <button type="button" onclick="showAbsentees()">未到班</button> <!-- 新增未到班按鈕 -->
+    </form>
+
+    {% if selected_date and selected_id %}
+    <h2>{{ selected_id }}的{{ selected_date }}出入紀錄</h2>
+    {% elif selected_id %}
+    <h2>{{ selected_id }}的出入紀錄</h2>
+    {% elif selected_date %}
+    <h2>{{ selected_date }}的出入紀錄</h2>
+    {% else %}
+    <h2>本日出入紀錄</h2>
+    {% endif %}
     <table>
         <thead>
             <tr>
                 <th>工號</th>
                 <th>姓名</th>
-                <th>註冊時間</th>
-                <th>操作</th> <!-- 新增操作列 -->
+                <th>入場時間</th>
+                <th>出/入場狀況</th>
+                <th>照片查詢</th>
             </tr>
         </thead>
         <tbody>
-            {% for user in users %}
-                <tr>
-                    <td>{{ user.number }}</td>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.signup_time }}</td>
-                    <td>
-                        <form method="POST" action="/delete/{{ user.number }}">
-                            <button type="submit">刪除</button>
-                        </form>
-                    </td>
-                </tr>
+            {% if entrance_record %}
+            {% for user in entrance_record %}
+            <tr>
+                <td>{{ user.entry_id }}</td>
+                <td>{{ user.entry_name }}</td>
+                <td>{{ user.entry_time }}</td>
+                <td>{{ user.in_out }}</td>
+                <td>
+                    <form method="POST" action="/showphoto1/{{ user.entry_time }}">
+                        <button type="submit">顯示圖片</button>
+                    </form>
+                </td>
+            </tr>
             {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="5">本日無任何紀錄!!</td>
+            </tr>
+            {% endif %}
         </tbody>
     </table>
+
 </body>
+
 </html>

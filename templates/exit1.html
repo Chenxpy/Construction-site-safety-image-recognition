@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>出場裝備辨識系統</title>
+    <style>
+        /* Style for camera feed container */
+        #camera-feed1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Style for webcam image */
+        #webcam {
+            border: 2px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Hover effect for webcam image */
+        #webcam:hover {
+            transform: scale(1.05);
+        }
+
+        /* Style for detection results container */
+        #detectionResults {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* Style for individual detection result items */
+        #detectionResults div {
+            margin-bottom: 5px;
+            font-size: 18px;
+        }
+
+        /* Style for "OK" detection result */
+        .ok {
+            color: green;
+            font-weight: bold;
+        }
+
+        /* Style for "Not OK" detection result */
+        .not-ok {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+</head>
+
+<body>
+    <div id="camera-feed1">
+        <h1>出場裝備辨識系統</h1>
+        <img src="{{ url_for('video_feed3') }}" width="640" height="480" />
+    </div>
+
+    <!-- 顯示辨識結果的容器 -->
+    <div id="detectionResults"></div>
+
+    <script>
+        // 連接到 Socket.IO 服務器
+        const socket = io();
+
+        // 監聽後端 detection 事件
+        socket.on('detection', function (data) {
+            console.log('Received detection result:', data);
+
+            // 將辨識結果顯示在網頁上
+            const detectionResultsDiv = document.getElementById('detectionResults');
+            detectionResultsDiv.innerHTML = '';    // 顯示前清空
+
+            // 定義類別名稱對應表
+            const classNames = {
+                "0.0": "頭盔",
+                "1.0": "背心",
+                "2.0": "手套",
+                "3.0": "人",
+                //"4.0": "鞋子"
+            };
+
+            // 如果所有辨識結果都為 OK，將重定向到成功頁面
+            const allOk = Object.values(data).every(val => val);
+            if (allOk) {
+                window.location.href = '/success1';
+            }
+            else {
+                // 逐一處理辨識結果
+                for (const classId of Object.keys(data)) {
+                    // 檢查是否有對應的類別名稱，如果有，使用對應的名稱，否則使用 classId
+                    const className = classNames[classId] || "空";
+                    const OK = data[classId] ? "OK" : "Not OK"; // 根據數據判斷是否 OK
+                    const resultItem = document.createElement('div');
+                    resultItem.textContent = `${className}: ${OK}`;
+                    resultItem.classList.add(data[classId] ? 'ok' : 'not-ok');
+                    detectionResultsDiv.appendChild(resultItem);
+                }
+            }
+
+        });
+    </script>
+</body>
+
+</html>

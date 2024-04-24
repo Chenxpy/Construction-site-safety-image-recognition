@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>入場裝備辨識成功</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: green;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>裝備辨識成功，請入場!!</h1>
+    <p id="countdown"></p>
+    <script>
+        var seconds = 5; // 設定跳轉倒數秒數
+
+        // 顯示秒數並每秒更新
+        var countdownDisplay = document.getElementById("countdown");
+        var countdownInterval = setInterval(function () {
+            countdownDisplay.textContent = seconds + " 秒後跳回至入場人臉辨識";
+            seconds--;
+            if (seconds < 0) {
+                clearInterval(countdownInterval); // 清除計時器
+                window.location.href = "/camera";
+            }
+        }, 1000); // 每秒更新一次
+    </script>
+</body>
+
+</html>

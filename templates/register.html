@@ -1,115 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>註冊</title>
-    <style>
-        #webcam-container {
-            width: 100%;
-            max-width: 600px;
-            overflow: hidden;
-        }
-        #webcam {
-            width: 50%;
-            transform: scaleX(-1);
-        }
-        #catchCanvas {
-            display: block;
-            margin: auto;
-            border: 1px solid #000000;
-            width: 20%;
-        }
-        #currentTime {
-            margin-top: 10px;
-        }
-        #capturedTime {
-            margin-top: 10px;
-        }
-        #capturedInfo {
-            margin-top: 10px;
-        }
-    </style>
+    <title>註冊帳號系統</title>
+    <link rel="stylesheet" href="static\register_style.css">
 </head>
+
 <body>
-    <a href="{{ url_for('home') }}" style="position: absolute; top: 10px; right: 10px; text-decoration: none; color: #000;">
-        <button>返回首頁</button>
-    </a>
-    <form method="POST" action="/register">
-        <div id="webcam-container">
-            <video id="webcam" autoplay></video>
+    <div id="camera-feed4">
+        <div id="camera-container">
+            <h1>註冊系統</h1>
+            <img src="{{ url_for('video_feed4') }}" id="webcam" />
+            <canvas id="catchCanvas" width="640px" height="480px"></canvas>
         </div>
-        <label for="number">工號：</label>
-        <input type="text" id="number" name="number" required minlength="9" maxlength="9">
-        <label for="username">姓名：</label>
-        <input type="text" id="username" name="username" required>
-        <button type="button" id="checkButton">擷取/確認</button>
-        <canvas id="catchCanvas"></canvas>
-        <p id="currentTime">當前時間: <span id="time"></span></p>
-        <p id="capturedTime">註冊時間: <span id="capturedTimestamp"></span></p>
-        <p id="capturedInfo">工號: <span id="capturedNumber"></span> 姓名: <span id="capturedUsername"></span></p>
-        <button type="submit">註冊</button>
-    </form>
+
+        <div id="form-container">
+            <!--返回主頁面 -->
+            <a href="{{ url_for('home') }}" style="text-decoration: none; color: #000;">
+                <button id="back-button">返回首頁</button>
+            </a>
+
+            <form method="POST" action="/register">
+                <label for="number">工號：</label>
+                <input type="text" id="number" name="number" required minlength="9" maxlength="9">
+                <label for="username">姓名：</label>
+                <input type="text" id="username" name="username" required>
+                <button type="button" id="captureButton">擷取</button> <!-- Change type to button -->
+                <p id="currentTime">當前時間: <span id="time"></span></p>
+                <p>工號: <span id="capturedNumber"></span> </p>
+                <p>姓名: <span id="capturedUsername"></span></p>
+                <input type="hidden" id="capturedImageData" name="capturedImageData">
+                <button type="submit">註冊</button>
+                <div id="error-message" style="color: red; display: none;">請先擷取圖片再進行註冊！</div>
+                {% if error2 %}
+                <p class="errormessage">該工號已註冊，請檢查輸入工號是否有誤!!</p>
+                {% endif %}
+                {% if success %}
+                <p class="errormessage">註冊成功!!</p>
+                {% endif %}
+            </form>
+        </div>
+    </div>
 
     <script>
-        // 初始化 webcam
-        navigator.mediaDevices.getUserMedia({ video: true })
-        .then(function(stream) {
-            var video = document.getElementById('webcam');
-            video.srcObject = stream;
-        })
-        .catch(function(error) {
-            console.error('無法開啟鏡頭: ' + error);
+        document.querySelector('form').addEventListener('submit', function (event) {
+            var canvas = document.getElementById('catchCanvas');
+            var context = canvas.getContext('2d');
+
+            // 檢查 Canvas 中是否有圖片
+            if (context.getImageData(0, 0, canvas.width, canvas.height).data.every(pixel => pixel === 0)) {
+                // 如果 Canvas 中沒有圖片，阻止表單提交並顯示錯誤提示元素
+                event.preventDefault();
+                document.getElementById('error-message').style.display = 'block';
+            }
+        });
+        document.getElementById('captureButton').addEventListener('click', function () {
+            captureAndDisplay();
         });
 
-        // 更新時間每秒執行一次
-        setInterval(CurrentTime, 1000);
-
-        function CurrentTime() {
-            var nowtime = new Date();
-            var timeElement = document.getElementById('time');
-            var currentTimeString = nowtime.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
-            timeElement.textContent = currentTimeString;
-        }
-
-        document.getElementById('checkButton').addEventListener('click', function() {
-            catchAndDisplay();
-        });
-        
-        // 擷取動作
-        function catchAndDisplay() {
+        function captureAndDisplay() {
             var video = document.getElementById('webcam');
             var canvas = document.getElementById('catchCanvas');
             var context = canvas.getContext('2d');
 
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.scale(-1, 1);
-            context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
-            //context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // 從攝影機捕捉畫面並顯示在 canvas 上
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // 顯示當下時間
-            var nowtime = new Date();
-            var timeElement = document.getElementById('time');
-            var currentTimeString = nowtime.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
-            timeElement.textContent = currentTimeString;
 
-            // 顯示註冊時間
-            var capturedTimeElement = document.getElementById('capturedTimestamp');
-            var capturedTimeString = nowtime.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
-            capturedTimeElement.textContent = capturedTimeString;
+            // 將 canvas 的畫面轉換為 Base64 格式
+            var imageData = canvas.toDataURL('image/png');
 
-            // 保存工號和姓名
-            var capturedNumberElement = document.getElementById('capturedNumber');
-            var capturedUsernameElement = document.getElementById('capturedUsername');
+            // 將轉換後的圖像數據設置到隱藏的輸入資料欄中
+            document.getElementById('capturedImageData').value = imageData;
+            // 更新時間每秒執行一次
+            setInterval(CurrentTime, 1000);
+
+            function CurrentTime() {
+                var nowtime = new Date();
+                var timeElement = document.getElementById('time');
+                var currentTimeString = nowtime.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
+                timeElement.textContent = currentTimeString;
+            }
+
+            // 顯示擷取資訊
             var capturedNumberInput = document.getElementById('number');
             var capturedUsernameInput = document.getElementById('username');
+            var capturedNumberElement = document.getElementById('capturedNumber');
+            var capturedUsernameElement = document.getElementById('capturedUsername');
             capturedNumberElement.textContent = capturedNumberInput.value;
             capturedUsernameElement.textContent = capturedUsernameInput.value;
         }
-
     </script>
 </body>
+
 </html>
-
-

@@ -1,85 +1,127 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
+
 <head>
-    <meta charset="utf-8">
-    <title>Camera</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.3/socket.io.js"></script>
+    <title>入場身份辨識</title>
     <style>
         body {
-            display: grid;
-            grid-template-columns: 1fr 1fr; /* 將網頁分為兩個相等的列 */
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             height: 100vh;
             margin: 0;
+            background-color: #f5f5f5;
         }
 
-        #webcam {
-            transform: scaleX(-1);
-            width: 50vw; /* 設置寬度為視口寬度的50% */
-            height: auto; /* 保持高度自適應 */
+        #camera-feed,
+        #info-section {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        #container {
-            display: flex;
-            flex-grow: 1; /* 讓 #container 填滿可用空間 */
+        #camera-feed {
+            margin-right: 20px;
         }
 
-        #identification, #equipmentRecognition {
-            flex-grow: 1; /* 平均分配寬度 */
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 10px;
-            border-radius: 5px;
+        #camera-feed h1,
+        #info-section p {
+            margin-bottom: 10px;
+        }
+
+        #success_message,
+        #message,
+        #countdown {
             text-align: center;
-            border: 2px solid #333; /* 2像素黑色邊框 */
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
-            height: 90vh; /* 讓身份辨識和裝備辨識的高度各佔一半 */
-            overflow: auto; /* 若內容超出高度，添加滾動條 */
         }
 
-        #equipmentRecognition p {
-            color: red; /* 使用紅色文字 */
-            font-size: 40px;
+        #success_message {
+            color: green;
+            display: none;
         }
 
-        #equipmentRecognition h3 {
-            color: black; /* 裝備辨識標題使用黑色文字 */
+        #message {
+            color: red;
+        }
+
+        #countdown {
+            font-weight: bold;
         }
     </style>
 </head>
+
+
 <body>
-    <a href="{{ url_for('home') }}" style="position: absolute; top: 10px; right: 10px; text-decoration: none; color: #000;">
-        <button>返回首頁</button>
-    </a>
-    <video id="webcam" autoplay></video>
-
-    <div id="container">
-        <div id="identification">
-            <h3>身份辨識</h3>
-            <div id="identifiedInfo">
-                <p>工號:</p>
-                <p>姓名:</p>
-                <!-- 辨識後顯示的資訊會顯示在這裡 -->
-            </div>
-        </div>
-
-        <div id="equipmentRecognition">
-            <h3>裝備辨識</h3>
-            <div id="equipmentInfo">
-                <p>安全帽</p>
-                <p>反光背心</p>
-                <p>手套</p>
-                <p>工作鞋</p>
-            </div>
-        </div>
+    <div id="camera-feed">
+        <h1>人臉身分辨識</h1>
+        <img src="{{ url_for('video_feed') }}" width="640" height="480" />
     </div>
 
-    <script>
-        navigator.mediaDevices.getUserMedia({ video: true }) // 請求鏡頭權限
-            .then(function(stream) {
-                var video = document.getElementById('webcam');
-                video.srcObject = stream;
-            })
-            .catch(function(error) {
-                console.error('無法開啟鏡頭: ' + error);
-            });
+
+    <div id="info-section">
+        <p><strong>請用</strong><span id="y"></span> <strong>比出</strong><span id="x"></span></p>
+        <p><strong>辨識人工號:</strong> <span id="person_id"></span></p>
+        <p><strong>辨識人姓名:</strong> <span id="person_name"></span></p>
+        <p id="success_message" style="display: none;">身份辨識成功！</p>
+        <p id="message" style="color: red;">辨識中...</p>
+        <p id="countdown"></p>
+    </div>
+
+
+
+    <script type="text/javascript">
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        socket.on('update_data1', function (data) {
+            // 更新網頁上的數據
+            document.getElementById('x').innerText = data.x;
+            document.getElementById('y').innerText = data.y;
+        });
+        socket.on('update_data', function (data) {
+            // 更新網頁上的數據
+
+
+            document.getElementById('person_id').innerText = data.id;
+            document.getElementById('person_name').innerText = data.name;
+
+
+
+            // 顯示成功提示
+            document.getElementById('success_message').style.display = 'block';
+
+            // 清除辨識失敗的提示
+            document.getElementById('message').style.display = 'none';
+            //dataUpdated = true; // 數據已更新
+
+
+            // 開始倒數計時，3秒後跳轉
+            var secondsLeft = 3;
+            var countdownElement = document.getElementById('countdown');
+
+
+            function updateCountdown() {
+                countdownElement.innerText = secondsLeft + ' 秒後跳轉至裝備辨識系統!';
+                secondsLeft--;  //secondsLeft = secondsLeft - 1;
+
+
+                if (secondsLeft < 0) {
+                    clearInterval(countdownInterval);
+                    // X秒後-->清除計時器-->跳轉至裝備辨識頁面辨識
+                    window.location.href = "/camera1";
+                }
+            }
+            //updateCountdown();  // 立即顯示倒數秒數
+
+
+            var countdownInterval = setInterval(updateCountdown, 1000);
+        });
     </script>
 </body>
+
+
 </html>

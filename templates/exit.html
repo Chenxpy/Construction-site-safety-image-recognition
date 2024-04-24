@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.3/socket.io.js"></script>
+    <title>出場身份辨識系統</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+
+        #camera-feed,
+        #info-section {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #camera-feed {
+            margin-right: 20px;
+        }
+
+        #camera-feed h1,
+        #info-section p {
+            margin-bottom: 10px;
+        }
+
+        #success_message,
+        #message,
+        #countdown {
+            text-align: center;
+        }
+
+        #success_message {
+            color: green;
+            display: none;
+        }
+
+        #message {
+            color: red;
+        }
+
+        #countdown {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="camera-feed">
+        <h1>出場人臉身分辨識</h1>
+        <img src="{{ url_for('video_feed2') }}" width="640" height="480" />
+    </div>
+
+    <div id="info-section">
+        <p><strong>請用</strong><span id="y"></span> <strong>比出</strong><span id="x"></span></p>
+        <p><strong>辨識人工號:</strong> <span id="person_id"></span></p>
+        <p><strong>辨識人姓名:</strong> <span id="person_name"></span></p>
+        <p id="success_message" style="display: none;">身份辨識成功！</p>
+        <p id="message" style="color: red;">辨識中...</p>
+        <p id="countdown"></p>
+    </div>
+
+
+    <script type="text/javascript">
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        socket.on('update_data1', function (data) {
+            // 更新網頁上的數據
+            document.getElementById('x').innerText = data.x;
+            document.getElementById('y').innerText = data.y;
+        });
+        socket.on('update_data', function (data) {
+            // 更新網頁上的數據
+
+            document.getElementById('person_id').innerText = data.id;
+            document.getElementById('person_name').innerText = data.name;
+
+
+            // 顯示成功提示
+            document.getElementById('success_message').style.display = 'block';
+
+            // 清除辨識失敗的提示
+            document.getElementById('message').style.display = 'none';
+            //dataUpdated = true; // 數據已更新
+
+            // 開始倒數計時，3秒後跳轉
+            var secondsLeft = 3;
+            var countdownElement = document.getElementById('countdown');
+
+            function updateCountdown() {
+                countdownElement.innerText = secondsLeft + ' 秒後跳轉至裝備辨識系統!';
+                secondsLeft--;  //secondsLeft = secondsLeft - 1;
+
+                if (secondsLeft < 0) {
+                    clearInterval(countdownInterval);
+                    // X秒後-->清除計時器-->跳轉至裝備辨識頁面辨識
+                    window.location.href = "/exit1";
+                }
+            }
+            //updateCountdown();  // 立即顯示倒數秒數
+
+            var countdownInterval = setInterval(updateCountdown, 1000);
+        });
+    </script>
+</body>
+
+</html>
